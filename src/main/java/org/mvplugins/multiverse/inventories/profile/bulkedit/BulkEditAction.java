@@ -1,6 +1,7 @@
 package org.mvplugins.multiverse.inventories.profile.bulkedit;
 
 import org.bukkit.Bukkit;
+import org.mvplugins.multiverse.inventories.FoliaUtil;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.ApiStatus;
 import org.mvplugins.multiverse.inventories.MultiverseInventories;
@@ -46,9 +47,14 @@ public sealed abstract class BulkEditAction<K extends GlobalProfileKey> permits 
                             });
                 })
                 .toArray(CompletableFuture[]::new))
-                .thenRun(() ->
-                        Bukkit.getScheduler().runTask(inventories, () ->
-                                onlinePlayers.forEach(this::updateOnlinePlayerNow)))
+                .thenRun(() -> {
+                    Runnable updateTask = () -> onlinePlayers.forEach(this::updateOnlinePlayerNow);
+                    if (FoliaUtil.isFolia()) {
+                        FoliaUtil.runGlobalSync(inventories, updateTask);
+                    } else {
+                        Bukkit.getScheduler().runTask(inventories, updateTask);
+                    }
+                })
                 .thenApply(ignore -> bulkEditResult);
     }
 

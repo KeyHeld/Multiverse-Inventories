@@ -2,6 +2,7 @@ package org.mvplugins.multiverse.inventories.view;
 
 import com.dumptruckman.minecraft.util.Logging;
 import org.bukkit.Bukkit;
+import org.mvplugins.multiverse.inventories.FoliaUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -299,13 +300,18 @@ public final class InventoryDataProvider {
         }
 
         // Run Bukkit API calls on the main thread
-        Bukkit.getScheduler().runTask(inventories, () -> {
+        Runnable updateTask = () -> {
             onlinePlayer.getInventory().setContents(newContents);
             onlinePlayer.getInventory().setArmorContents(newArmor);
             onlinePlayer.getInventory().setItemInOffHand(newOffHand);
-            onlinePlayer.updateInventory(); // Ensure client sees changes
+            onlinePlayer.updateInventory();
             Logging.info("Updated live inventory for online player " + onlinePlayer.getName() + " in world " + worldName);
-        });
+        };
+        if (FoliaUtil.isFolia()) {
+            FoliaUtil.runGlobalSync(inventories, updateTask);
+        } else {
+            Bukkit.getScheduler().runTask(inventories, updateTask);
+        }
     }
 
     private CompletableFuture<Void> writeInventoryDataToProfile(

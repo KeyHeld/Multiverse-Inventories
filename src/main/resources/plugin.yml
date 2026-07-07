@@ -1,4 +1,5 @@
 name: Multiverse-Inventories
+folia-supported: true
 main: org.mvplugins.multiverse.inventories.MultiverseInventories
 version: ${version}
 api-version: 1.13
@@ -7,3 +8,4 @@ website: 'https://modrinth.com/plugin/multiverse-inventories'
 description: 'Lets players have separate inventories per world!'
 depend: ['Multiverse-Core']
 softdepend: [LuckPerms, PlaceholderAPI, MultiInv, WorldInventories, PerWorldInventory]
+

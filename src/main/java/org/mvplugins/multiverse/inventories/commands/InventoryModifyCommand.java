@@ -2,6 +2,7 @@ package org.mvplugins.multiverse.inventories.commands;
 
 import com.dumptruckman.minecraft.util.Logging;
 import org.bukkit.Bukkit;
+import org.mvplugins.multiverse.inventories.FoliaUtil;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -88,16 +89,19 @@ final class InventoryModifyCommand extends InventoriesCommand {
         inventoryDataProvider.loadPlayerInventoryData(targetPlayer, worldName)
                 .thenAccept(playerInventoryData -> {
                     // Ensure GUI operations run on the main thread
-                    Bukkit.getScheduler().runTask(inventories, () -> {
-
-                        // If the player tries to modify their own live inventory, stop
+                    Runnable guiTask = () -> {
                         if (player.getUniqueId().equals(targetPlayer.getUniqueId())
                             && player.getWorld().getName().equalsIgnoreCase(worldName)) {
                             issuer.sendError(MVInvi18n.INVENTORY_MODIFYLIVESELF);
-                            return; // Stop here if it's a live self-inventory
+                            return;
                         }
                         createAndOpenGUI(issuer, player, targetPlayer, worldName, playerInventoryData);
-                    });
+                    };
+                    if (FoliaUtil.isFolia()) {
+                        FoliaUtil.runGlobalSync(inventories, guiTask);
+                    } else {
+                        Bukkit.getScheduler().runTask(inventories, guiTask);
+                    }
                 })
 
 

@@ -2,6 +2,7 @@ package org.mvplugins.multiverse.inventories.listeners;
 
 import com.dumptruckman.minecraft.util.Logging;
 import org.bukkit.Bukkit;
+import org.mvplugins.multiverse.inventories.FoliaUtil;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -125,12 +126,16 @@ final class InventoryViewListener implements MVInvListener {
                 event.getAction() == InventoryAction.PICKUP_HALF ||
                 event.getAction() == InventoryAction.PICKUP_ONE ||
                 event.getAction() == InventoryAction.PICKUP_SOME) {
-            Bukkit.getScheduler().runTaskLater(inventories, () -> {
-                // After Bukkit processes the click, if the slot is now empty, put the filler back.
+            Runnable refillTask = () -> {
                 if (event.getInventory().getItem(clickedSlot) == null || event.getInventory().getItem(clickedSlot).getType() == Material.AIR) {
                     event.getInventory().setItem(clickedSlot, inventoryGUIHelper.createFillerItemForSlot(clickedSlot, true));
                 }
-            }, 1L);
+            };
+            if (FoliaUtil.isFolia()) {
+                FoliaUtil.runGlobalDelayed(inventories, refillTask, 1L);
+            } else {
+                Bukkit.getScheduler().runTaskLater(inventories, refillTask, 1L);
+            }
         }
     }
 
@@ -176,13 +181,18 @@ final class InventoryViewListener implements MVInvListener {
         }
 
         // After a drag, check if any special slots became empty and replace with filler
-        Bukkit.getScheduler().runTaskLater(inventories, () -> {
+        Runnable dragRefillTask = () -> {
             for (int slot : event.getRawSlots()) {
                 if ((slot >= 36 && slot <= 40) && (event.getInventory().getItem(slot) == null || event.getInventory().getItem(slot).getType() == Material.AIR)) {
-                    event.getInventory().setItem(slot, inventoryGUIHelper.createFillerItemForSlot(slot, true)); // Use helper
+                    event.getInventory().setItem(slot, inventoryGUIHelper.createFillerItemForSlot(slot, true));
                 }
             }
-        }, 1L); // Run one tick later
+        };
+        if (FoliaUtil.isFolia()) {
+            FoliaUtil.runGlobalDelayed(inventories, dragRefillTask, 1L);
+        } else {
+            Bukkit.getScheduler().runTaskLater(inventories, dragRefillTask, 1L);
+        }
     }
 
     // Event handler for InventoryCloseEvent to save changes

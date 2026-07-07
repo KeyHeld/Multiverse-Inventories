@@ -2,6 +2,7 @@ package org.mvplugins.multiverse.inventories.commands;
 
 import com.dumptruckman.minecraft.util.Logging;
 import org.bukkit.Bukkit;
+import org.mvplugins.multiverse.inventories.FoliaUtil;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -88,9 +89,11 @@ final class InventoryViewCommand extends InventoriesCommand {
     inventoryDataProvider.loadPlayerInventoryData(targetPlayer, worldName)
             .thenAccept(playerInventoryData -> {
                 //  Ensure GUI operations run on the main thread
-                Bukkit.getScheduler().runTask(inventories, () -> {
-                    createAndOpenGUI(issuer, player, targetPlayer, worldName, playerInventoryData);
-                }); // End of Bukkit.getScheduler().runTask()
+                if (FoliaUtil.isFolia()) {
+                    FoliaUtil.runGlobalSync(inventories, () -> createAndOpenGUI(issuer, player, targetPlayer, worldName, playerInventoryData));
+                } else {
+                    Bukkit.getScheduler().runTask(inventories, () -> createAndOpenGUI(issuer, player, targetPlayer, worldName, playerInventoryData));
+                }
             })
             .exceptionally(throwable -> {
                 // This block runs if an exception occurs during data loading

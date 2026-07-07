@@ -89,17 +89,26 @@ final class InventoriesDupingPatch {
      *
      * @param plugin to enable with
      */
+    private Object foliaUpdateTask;
+
     public void enable(Plugin plugin) {
         Bukkit.getPluginManager().registerEvents(this.listener, plugin);
-        this.updateTimeoutsTaskId = Bukkit.getScheduler().runTaskTimer(
-                plugin, new UpdateTimeoutsTask(), 1, 1).getTaskId();
+        if (FoliaUtil.isFolia()) {
+            foliaUpdateTask = FoliaUtil.runGlobalTimer(plugin, new UpdateTimeoutsTask(), 1, 1);
+        } else {
+            this.updateTimeoutsTaskId = Bukkit.getScheduler().runTaskTimer(
+                    plugin, new UpdateTimeoutsTask(), 1, 1).getTaskId();
+        }
     }
 
     /**
      * Disables this patch, cancelling any registered listeners and tasks
      */
     public void disable() {
-        if (this.updateTimeoutsTaskId != -1) {
+        if (FoliaUtil.isFolia()) {
+            FoliaUtil.cancelTask(foliaUpdateTask);
+            foliaUpdateTask = null;
+        } else if (this.updateTimeoutsTaskId != -1) {
             Bukkit.getScheduler().cancelTask(this.updateTimeoutsTaskId);
             this.updateTimeoutsTaskId = -1;
         }

@@ -28,6 +28,7 @@ import org.mvplugins.multiverse.inventories.share.Sharables;
 import org.mvplugins.multiverse.inventories.util.ItemStackConverter;
 import org.mvplugins.multiverse.inventories.util.Perm;
 import org.bukkit.Bukkit;
+import org.mvplugins.multiverse.inventories.FoliaUtil;
 import org.mvplugins.multiverse.external.jakarta.inject.Inject;
 import org.mvplugins.multiverse.external.jakarta.inject.Provider;
 import org.jvnet.hk2.annotations.Service;
@@ -242,20 +243,24 @@ public class MultiverseInventories extends MultiverseModule {
             return;
         }
 
-        this.getServer().getScheduler().runTaskLater(this, () -> {
+        Runnable firstRunTask = () -> {
             // Create initial World Group for first run IF NO GROUPS EXIST
             if (inventoriesConfig.get().getFirstRun()) {
                 Logging.info("First run!");
                 if (worldGroupManager.get().getGroups().isEmpty()) {
                     worldGroupManager.get().createDefaultGroup();
                 }
-
                 inventoriesConfig.get().setFirstRun(false);
                 inventoriesConfig.get().save();
             }
             worldGroupManager.get().checkForConflicts()
                     .sendConflictIssue(commandManagerProvider.get().getConsoleCommandIssuer());
-        }, 1L);
+        };
+        if (FoliaUtil.isFolia()) {
+            FoliaUtil.runGlobalDelayed(this, firstRunTask, 1L);
+        } else {
+            this.getServer().getScheduler().runTaskLater(this, firstRunTask, 1L);
+        }
     }
 
     /**

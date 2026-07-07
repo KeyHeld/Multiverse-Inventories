@@ -28,6 +28,7 @@ import org.mvplugins.multiverse.inventories.profile.container.ProfileContainer;
 import org.mvplugins.multiverse.inventories.profile.group.WorldGroupManager;
 import org.mvplugins.multiverse.inventories.share.Sharables;
 import org.bukkit.Bukkit;
+import org.mvplugins.multiverse.inventories.FoliaUtil;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -287,13 +288,15 @@ final class ShareHandleListener implements MVInvListener {
             return;
         }
         final Player player = event.getPlayer();
-        Bukkit.getScheduler().runTaskLater(
-                inventories,
-                () -> verifyCorrectWorld(
-                        player,
-                        player.getWorld().getName(),
-                        FutureNow.get(profileDataSource.getGlobalProfile(GlobalProfileKey.of(player)))),
-                2L);
+        Runnable verifyTask = () -> verifyCorrectWorld(
+                player,
+                player.getWorld().getName(),
+                FutureNow.get(profileDataSource.getGlobalProfile(GlobalProfileKey.of(player))));
+        if (FoliaUtil.isFolia()) {
+            FoliaUtil.runGlobalDelayed(inventories, verifyTask, 2L);
+        } else {
+            Bukkit.getScheduler().runTaskLater(inventories, verifyTask, 2L);
+        }
     }
 
     @EventMethod
